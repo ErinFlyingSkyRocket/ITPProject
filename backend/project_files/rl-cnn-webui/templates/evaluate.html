@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Evaluate Dataset</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        input[type="file"], button {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .box {
+            white-space: pre-wrap;
+            background-color: lightblue;
+            padding: 15px;
+            margin: 20px auto 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .secondbox {
+            white-space: pre-wrap;
+            background-color: lightgreen;
+            padding: 15px;
+            margin: 20px auto 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .progress-container {
+            display: none;
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 20px;
+            height: 20px;
+            margin: 20px auto;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #4CAF50;
+            border-radius: 20px;
+        }
+
+        .confusion-matrix-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .confusion-matrix-img {
+            max-width: 100%;
+            height: auto;
+            width: 500px;
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="header">Evaluate Dataset</div>
+
+<div class="container">
+  <a href="/find"><button>Find Optimum Architecture</button></a>
+  <a href="/"><button>Home</button></a>
+
+
+    <h1>Upload Testing Dataset</h1>
+    <p style="text-align: left">Trained Optimum Architecture: <span style="font-weight: bold">Conv2D(64, (5, 5), activation='relu', input_shape=(9, 9, 1), padding='same'),MaxPooling2D((2, 2), strides=2),Dropout(0.50),Conv2D(64, (7, 7), activation='relu',  padding='same'),MaxPooling2D((2, 2), strides=2),Dropout(0.25),Flatten(),Dense(1024, activation='relu'),Dropout(0.40),Dense(4),Adam optimizer with learning rate of 0.05</span>
+
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" id="file-input" name="file" required>
+        <button id="upload_2" type="submit">Upload</button>
+    </form>
+
+    <div id="box-container"></div>
+    <div class="progress-container" id="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div class="confusion-matrix-container" id="confusion-matrix-container">
+        <img id="confusion-matrix-img" class="confusion-matrix-img" />
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+<script>
+    const socket = io.connect('http://' + window.location.hostname + ':5000');
+
+    const uploadForm = document.getElementById('upload-form');
+    const boxContainer = document.getElementById('box-container');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const confusionMatrixContainer = document.getElementById('confusion-matrix-container');
+    const confusionMatrixImg = document.getElementById('confusion-matrix-img');
+
+    uploadForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const oldSecondBox = document.querySelector('.secondbox');
+        if (oldSecondBox) oldSecondBox.remove();
+
+        confusionMatrixContainer.style.display = 'none';
+        confusionMatrixImg.src = '';
+
+        const formData = new FormData();
+        const file = document.getElementById('file-input').files[0];
+        formData.append('file', file);
+
+        fetch('/upload_2', {
+            method: 'POST',
+            body: formData
+        });
+    });
+
+    socket.on('file_uploaded', (data) => {
+        const fileBox = document.createElement('div');
+        fileBox.className = 'box';
+
+    fileBox.textContent = `📄 File: ${data.filename}\nTotal:\t${data.total}\n\nBenign:\t${data.benign}\nUDP Lag:\t${data.udp_lag}\nSYN Flood:\t${data.syn_flood}\nUDP Flood:\t${data.udp_flood}`;
+
+        boxContainer.innerHTML = '';
+        boxContainer.appendChild(fileBox);
+
+        const evalBtn = document.createElement('button');
+        evalBtn.id = 'Evaluate_2';
+        evalBtn.textContent = "Evaluate";
+        evalBtn.onclick = () => {
+            socket.emit('Evaluate_2');
+            startProgressBar();
+
+            const oldSecondBox = document.querySelector('.secondbox');
+            if (oldSecondBox) oldSecondBox.remove();
+
+            confusionMatrixContainer.style.display = 'none';
+            confusionMatrixImg.src = '';
+        };
+        boxContainer.appendChild(evalBtn);
+    });
+
+    function startProgressBar() {
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        let percent = 0;
+
+        const interval = setInterval(() => {
+            percent += 2;
+            progressBar.style.width = percent + '%';
+            if (percent >= 100) {
+                clearInterval(interval);
+            }
+        }, 150);
+    }
+
+    socket.on('evaluation_done', (data) => {
+        progressContainer.style.display = 'none';
+
+        const resultBox = document.createElement('div');
+        resultBox.className = 'secondbox';
+        resultBox.textContent = `Overall Acc: ${data.accuracy}`;
+        boxContainer.appendChild(resultBox);
+    });
+
+    socket.on('show_confusion_matrix', () => {
+        confusionMatrixContainer.style.display = 'block';
+        confusionMatrixImg.src = '/get_confusion_matrix?ts=' + new Date().getTime();
+    });
+
+</script>
+</body>
+</html>
