@@ -1,3 +1,8 @@
+# This .gitignore file is used to exclude build artifacts, dependency folders,
+# system/IDE files, cache directories, logs, virtual environments, and machine learning outputs
+# from the Git repository for both the Angular frontend and Flask backend.
+
+
 # ========================
 # FRONTEND (Angular)
 # ========================
