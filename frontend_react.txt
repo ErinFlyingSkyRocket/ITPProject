@@ -1,0 +1,12 @@
+# Frontend Setup (Angular)
+
+1. Navigate to the frontend folder:
+   cd frontend
+
+2. Install dependencies:
+   npm install
+
+3. Start the Angular development server:
+   ng serve
+
+Angular will run on: http://localhost:4200
