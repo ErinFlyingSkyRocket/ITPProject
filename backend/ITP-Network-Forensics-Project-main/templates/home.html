@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .box {
+            white-space: pre-wrap;
+            background-color: lightblue;
+            padding: 15px;
+            margin: 20px auto 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Demo</div>
+    <div class="container">
+        <a href="/find"><button>Find Optimum Architecture</button></a>
+        <a href="/evaluate"><button>Evaluate Dataset</button></a>
+
+<div id="box-container"><div class="box"> Distributed Denial of Service (DDoS) Attack Dataset
+Total:  877162
+
+Benign: 44811
+UDP Lag:    77491
+SYN Flood:  354860
+UDP Flood:  400000</div></div>
+
+  <p style="text-align: left;margin-top: 50px;"><span style="color:blue">Conv2D(32, (5, 5), activation='relu', input_shape=(9, 9, 1), padding='same'),MaxPooling2D((2, 2), strides=2),Dropout(0.50),Conv2D(64, (3, 3), activation='relu',  padding='same'),MaxPooling2D((2, 2), strides=2),Dropout(0.25),Flatten(),Dense(1024, activation='relu'),Dropout(0.40),Dense(4),Adam optimizer with learning rate of 0.001</span>
+ <p style="text-align: left"><span style="color: blue;font-weight: bold">Acc: 0.8594</span></p>
+
+    <p style="text-align: left;margin-top: 50px"><span style="color:purple">Conv2D(64, (5, 5), activation='relu', input_shape=(9, 9, 1), padding='same'),MaxPooling2D((2, 2), strides=2),Dropout(0.50),Conv2D(64, (7, 7), activation='relu',  padding='same'),MaxPooling2D((2, 2), strides=2),Dropout(0.25),Flatten(),Dense(1024, activation='relu'),Dropout(0.40),Dense(4),Adam optimizer with learning rate of 0.05</span>
+ <p style="text-align: left"><span style="color: purple;font-weight: bold">Acc: 0.9788</span></p>
+
+    </div>
+</body>
+</html>

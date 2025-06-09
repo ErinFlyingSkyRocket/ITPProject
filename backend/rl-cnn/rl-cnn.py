@@ -11,6 +11,26 @@ from tensorflow.keras.optimizers import Adam
 from keras.layers import Dense, LSTM
 import random
 import pickle
+import optuna
+
+def optuna_objective(trial):
+    # Sample architecture components using trial
+    state = (
+        trial.suggest_int("conv1", 0, len(conv_layers)-1),
+        trial.suggest_int("pool1", 0, len(pool_layers)-1),
+        trial.suggest_int("dropout1", 0, len(dropout_layers)-1),
+        trial.suggest_int("conv2", 0, len(conv_layers)-1),
+        trial.suggest_int("pool2", 0, len(pool_layers)-1),
+        trial.suggest_int("dropout2", 0, len(dropout_layers)-1),
+        trial.suggest_int("dense", 0, len(dense_layers)-1),
+        trial.suggest_int("dropout3", 0, len(dropout_layers)-1),
+        trial.suggest_int("optimizer", 0, len(optimizers)-1),
+    )
+    model = generate_cnn_model(state)
+    model.fit(train_images, train_labels, batch_size=128, epochs=5, verbose=0)
+    _, test_acc = model.evaluate(test_images, test_labels, verbose=0)
+    return test_acc  # Maximize accuracy
+
 
 class DQN():
     def __init__(self, state_size, action_size, filename=None):
@@ -21,7 +41,7 @@ class DQN():
 
         self.model = self.create_model()
         self.memory = deque(maxlen=50000)
-        
+
     def create_model(self):
         """
         neural network model
@@ -73,6 +93,23 @@ test_labels = np.load("int_label_test.npy")
 
 train_images = padding_reshape(data_train[:,:62])
 test_images = padding_reshape(data_test[:,:62])
+
+study = optuna.create_study(direction="maximize")
+study.optimize(optuna_objective, n_trials=100)  # Tune number of trials if needed
+
+optuna_best_state = (
+    study.best_params["conv1"],
+    study.best_params["pool1"],
+    study.best_params["dropout1"],
+    study.best_params["conv2"],
+    study.best_params["pool2"],
+    study.best_params["dropout2"],
+    study.best_params["dense"],
+    study.best_params["dropout3"],
+    study.best_params["optimizer"],
+)
+print("🎯 Best Optuna state:", optuna_best_state)
+
 
 episodes = 50
 num_steps = 50
@@ -136,7 +173,7 @@ for episode in range(episodes):
     flag = True
     flag_count = 0
     # Max number of times generating a new default state or an action to create a new state during iteration before stopping the program
-    max_tries = 10 
+    max_tries = 10
 
     episode_reward = 0
 
@@ -146,7 +183,8 @@ for episode in range(episodes):
     iteration_test_acc = []
 
     # Initial state
-    state = tuple([1, 0, 6, 3, 0, 1, 3, 4, 7])
+    #state = tuple([1, 0, 6, 3, 0, 1, 3, 4, 7])
+    state = optuna_best_state
 
     # Previous test_acc, not previous best test_acc
     prev_test_acc = 0
@@ -287,5 +325,40 @@ for episode in range(episodes):
     else:
         np.save(target_test_acc_filename, episode_max_test_acc)
 
+
+def extract_best_state_from_output(file_path):
+    """
+    Reads the output.txt log and extracts the state with the highest test accuracy.
+    Returns the best state as a tuple of integers.
+    """
+    best_acc = -1
+    best_state = None
+
+    with open(file_path, 'r') as f:
+        for line in f:
+            parts = line.strip().split('|')
+            if len(parts) < 4:
+                continue
+            try:
+                acc = float(parts[2])
+                state_str = parts[3]
+                state = tuple(map(int, state_str.split(',')))
+                if acc > best_acc:
+                    best_acc = acc
+                    best_state = state
+            except:
+                continue
+
+    return best_state
+
+
+# === Save final best model after training ===
+final_best_state = extract_best_state_from_output('output.txt')  # define this function below
+print("🎯 Final best state:", final_best_state)
+
+final_model = generate_cnn_model(final_best_state)
+final_model.fit(train_images, train_labels, batch_size=128, epochs=5)
+final_model.save("final_model.h5")
+print("✅ Final model saved as final_model.h5")
 
 

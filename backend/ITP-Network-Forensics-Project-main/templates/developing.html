@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Train Test Split</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 50px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    input[type="file"], button {
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .box {
+      white-space: pre-wrap;
+      background-color: lightblue;
+      padding: 15px;
+      margin: 20px 0 10px;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    .secondbox {
+      background-color: lightgreen;
+      padding: 15px;
+      margin: 20px 0 10px;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: left;
+      white-space: pre-line;
+    }
+
+    .progress-container {
+      width: 100%;
+      background-color: #ddd;
+      border-radius: 20px;
+      height: 20px;
+      margin: 10px 0;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: #4CAF50;
+      border-radius: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">Train Test Split</div>
+
+
+<div class="container">
+
+  <a href="/evaluate"><button>Evaluate Dataset</button></a>
+  <a href="/"><button>Home</button></a>
+
+
+  <h1>Upload Dataset</h1>
+
+  <form id="upload-form" enctype="multipart/form-data">
+    <input type="file" id="file-input" name="file" required>
+    <button id="upload_3" type="submit">Upload</button>
+  </form>
+
+  <div id="box-container"></div>
+  <!-- <p style="text-align: left">Initial Architecture: <span style="font-weight: bold">Conv2D(32, (5, 5), activation='relu', input_shape=(9, 9, 1), padding='same'),MaxPooling2D((2, 2), strides=2),Dropout(0.50),Conv2D(64, (3, 3), activation='relu',  padding='same'),MaxPooling2D((2, 2), strides=2),Dropout(0.25),Flatten(),Dense(1024, activation='relu'),Dropout(0.40),Dense(4),Adam optimizer with learning rate of 0.001</span> -->
+
+  <div id="find-btn-container"></div>
+  <div id="secondbox-container"></div>
+</div>
+
+<script>
+  const defaultFileInfo = {
+    filename: "{{ default_file.filename }}",
+    total: {{ default_file.total }},
+    benign: {{ default_file.benign }},
+    udp_lag: {{ default_file.udp_lag }},
+    syn_flood: {{ default_file.syn_flood }},
+    udp_flood: {{ default_file.udp_flood }}
+  };
+
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+<script>
+  const socket = io.connect('http://' + window.location.hostname + ':5000');
+
+  const boxContainer = document.getElementById('box-container');
+  const secondBoxContainer = document.getElementById('secondbox-container');
+  const findBtnContainer = document.getElementById('find-btn-container');
+  const uploadForm = document.getElementById('upload-form');
+  const uploadButton = document.getElementById('upload_3');
+
+  function renderFileBox(data) {
+    boxContainer.innerHTML = '';
+    const fileBox = document.createElement('div');
+    fileBox.className = 'box';
+    fileBox.textContent = `📄 File: ${data.filename}\nTotal:\t${data.total}\n\nBenign:\t${data.benign}\nUDP Lag:\t${data.udp_lag}\nSYN Flood:\t${data.syn_flood}\nUDP Flood:\t${data.udp_flood}`;
+
+    boxContainer.appendChild(fileBox);
+  }
+
+  function renderConvertButton() {
+    findBtnContainer.innerHTML = '';
+    const btn = document.createElement('button');
+    btn.textContent = 'Convert';
+    btn.id = 'convert';
+    btn.onclick = () => socket.emit('convert');
+    findBtnContainer.appendChild(btn);
+  }
+
+  function createProgressBar(waitTime, callback) {
+    const container = document.createElement('div');
+    container.className = 'progress-container';
+    const bar = document.createElement('div');
+    bar.className = 'progress-bar';
+    container.appendChild(bar);
+    secondBoxContainer.appendChild(container);
+
+    let percent = 0;
+    const interval = setInterval(() => {
+      percent += 1;
+      bar.style.width = percent + '%';
+      if (percent >= 100) {
+        clearInterval(interval);
+        container.remove();
+        callback();
+      }
+    }, waitTime * 10);
+  }
+
+  socket.on('file_uploaded', (data) => {
+    renderFileBox(data);
+    renderConvertButton();
+  });
+
+//   socket.on('find_step', (data) => {
+//     const iteration = data.iteration;
+//     const number = data.number;
+//     const letter = data.letter;
+//     const waitTime = data.wait_time;
+
+//     const evalBox = document.createElement('div');
+//     evalBox.className = 'secondbox';
+//     secondBoxContainer.appendChild(evalBox);
+
+//     evalBox.textContent = `Episode 0, Iteration ${iteration}\n${number}\n`;
+//     createProgressBar(waitTime, () => {
+//       evalBox.textContent += `Acc: ${letter}\n`;
+//     });
+//   });
+
+  socket.on('clear_previous_results', () => {
+    secondBoxContainer.innerHTML = '';
+  });
+  
+  socket.on('error', (error) => {
+    const errorBox = document.createElement('div');
+    errorBox.className = 'secondbox';
+    errorBox.textContent = `Error: ${error['message']}`;
+    errorBox.style.backgroundColor = '#FFCCCB'; // Light red background for errors
+    secondBoxContainer.appendChild(errorBox);
+  });
+
+  socket.on('conversion_result', (data) => {
+    secondBoxContainer.innerHTML = '';
+
+    const resultBox = document.createElement('div');
+    resultBox.className = 'secondbox';
+
+    // Class label mapping
+    const classNames = {
+        0: 'Benign',
+        1: 'UDP Lag',
+        2: 'SYN Flood',
+        3: 'UDP Flood'
+    };
+
+    // Create a table
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+
+    // Header row
+    const headerRow = document.createElement('tr');
+    ['Class', 'Input Count', 'Train Count', 'Test Count'].forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        th.style.border = '1px solid #333';
+        th.style.padding = '8px';
+        th.style.backgroundColor = '#d5f5e3';
+        headerRow.appendChild(th);
+    });
+    table.appendChild(headerRow);
+
+    // Get all class labels
+    const allLabels = new Set([
+        ...Object.keys(data.input_counts),
+        ...Object.keys(data.train_counts),
+        ...Object.keys(data.test_counts)
+    ]);
+
+    // Sort and loop through class labels
+    [...allLabels].sort((a, b) => a - b).forEach(label => {
+        const row = document.createElement('tr');
+
+        const tdClass = document.createElement('td');
+        tdClass.textContent = classNames[label] || `Class ${label}`;
+        row.appendChild(tdClass);
+
+        const tdInput = document.createElement('td');
+        tdInput.textContent = data.input_counts[label] ?? 0;
+        row.appendChild(tdInput);
+
+        const tdTrain = document.createElement('td');
+        tdTrain.textContent = data.train_counts[label] ?? 0;
+        row.appendChild(tdTrain);
+
+        const tdTest = document.createElement('td');
+        tdTest.textContent = data.test_counts[label] ?? 0;
+        row.appendChild(tdTest);
+
+        [tdClass, tdInput, tdTrain, tdTest].forEach(td => {
+        td.style.border = '1px solid #333';
+        td.style.padding = '6px';
+        td.style.textAlign = 'center';
+        });
+
+        table.appendChild(row);
+    });
+
+    // Append table to result box
+    const header = document.createElement('h3');
+    header.textContent = 'Converted Data';
+    resultBox.appendChild(header);
+    resultBox.appendChild(table);
+    secondBoxContainer.appendChild(resultBox);
+    });
+
+
+  socket.on('download_csv', function(payload) {
+        const filename = payload.filename || 'download.csv';
+        const csvContent = payload.data;
+
+        // Create a Blob from the CSV string
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+        // Create a temporary <a> element to trigger download
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } else {
+            alert('CSV download is not supported in this browser.');
+        }
+    });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderFileBox(defaultFileInfo);
+    renderConvertButton();
+  });
+
+  uploadForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    secondBoxContainer.innerHTML = '';
+    const formData = new FormData();
+    const file = document.getElementById('file-input').files[0];
+    formData.append('file', file);
+
+    fetch('/upload_3', {
+      method: 'POST',
+      body: formData
+    });
+  });
+</script>
+</body>
+</html>
