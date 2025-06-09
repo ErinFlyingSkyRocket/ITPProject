@@ -1,0 +1,78 @@
+.page-container {
+  font-family: Arial, sans-serif;
+  background-color: #f0f2f5;
+  min-height: 100vh;
+}
+
+.page-header {
+  background-color: #4CAF50;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-size: 24px;
+}
+
+.card-container {
+  max-width: 1000px;
+  margin: 50px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.button-style {
+  margin: 10px 5px;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: none;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+}
+
+.upload-button {
+  margin-left: 10px;
+}
+
+.box-style {
+  white-space: pre-wrap;
+  background-color: lightblue;
+  padding: 15px;
+  margin: 20px auto 10px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.result-style {
+  white-space: pre-wrap;
+  background-color: lightgreen;
+  padding: 15px;
+  margin: 20px auto 10px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.upload-status {
+  margin-top: 10px;
+}
+
+.progress-container {
+  width: 100%;
+  background-color: #ddd;
+  border-radius: 20px;
+  height: 20px;
+  margin-top: 20px;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #4CAF50;
+  border-radius: 20px;
+}
+
+.confusion-container {
+  margin-top: 20px;
+}
