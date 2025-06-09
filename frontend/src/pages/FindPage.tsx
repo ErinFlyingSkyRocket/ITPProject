@@ -29,25 +29,26 @@ const FindPage: React.FC = () => {
 
   const handleUpload = async () => {
     if (!file) return;
-
     const formData = new FormData();
     formData.append('file', file);
-
     await fetch('http://localhost:5000/upload', {
-      method: 'POST',
-      body: formData,
+        method: 'POST',
+        body: formData,
     });
-  };
+    };
+
 
   useEffect(() => {
     socket.on('file_uploaded', (data) => {
-      setFileStats(data);
+        console.log('File stats received:', data);
+        setFileStats(data);
     });
 
     return () => {
-      socket.off('file_uploaded');
+        socket.off('file_uploaded');
     };
   }, []);
+
 
   const [findResults, setFindResults] = useState<Array<{
     architecture: string;

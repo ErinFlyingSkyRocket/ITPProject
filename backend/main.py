@@ -129,6 +129,7 @@ def handle_convert():
 
 @app.route('/upload', methods=['POST'])
 def upload():
+    global temp_data
     if 'file' not in request.files:
         return "No file uploaded", 400
 
@@ -146,25 +147,22 @@ def upload():
         classes, samples_each_class = np.unique(test_labels, return_counts=True)
         class_counts = dict(zip(classes.astype(int), samples_each_class))
 
-        temp_data['filename'] = filename
-        temp_data['total'] = len(test_labels)
-        temp_data['benign'] = class_counts.get(0, 0)
-        temp_data['udp_lag'] = class_counts.get(1, 0)
-        temp_data['syn_flood'] = class_counts.get(2, 0)
-        temp_data['udp_flood'] = class_counts.get(3, 0)
-
-        socketio.emit('file_uploaded', {
+        temp_data = {
             'filename': filename,
-            'total': temp_data['total'],
-            'benign': int(temp_data['benign']),
-            'udp_lag': int(temp_data['udp_lag']),
-            'syn_flood': int(temp_data['syn_flood']),
-            'udp_flood': int(temp_data['udp_flood'])
-        })
+            'total': len(test_labels),
+            'benign': int(class_counts.get(0, 0)),
+            'udp_lag': int(class_counts.get(1, 0)),
+            'syn_flood': int(class_counts.get(2, 0)),
+            'udp_flood': int(class_counts.get(3, 0)),
+        }
 
-        return "Upload successful", 200
+        # ✅ MUST broadcast this to React client
+        socketio.emit('file_uploaded', temp_data, broadcast=True)
+
+        return jsonify({'message': 'Upload successful'}), 200
     except Exception as e:
         return f"Error reading file: {e}", 500
+
 
 
 @socketio.on('find')
